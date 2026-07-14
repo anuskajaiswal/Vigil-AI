@@ -21,15 +21,15 @@ Agent performs an action, which triggers POST /api/events. That runs two checks:
 
 ## Built with
 
-Java + Spring Boot for the backend
-PostgreSQL for storage
-Spring Data JPA / Hibernate so I'm not writing raw SQL by hand
-Plain HTML/CSS/JS for the dashboard — no frameworks, kept it simple on purpose
-Tested manually with curl before building the frontend, to make sure the logic actually worked before worrying about how it looked
+1. Java + Spring Boot for the backend
+2. PostgreSQL for storage
+3. Spring Data JPA / Hibernate so I'm not writing raw SQL by hand
+4. Plain HTML/CSS/JS for the dashboard — no frameworks, kept it simple on purpose
+5. Tested manually with curl before building the frontend, to make sure the logic actually worked before worrying about how it looked
 
 ## API
 
-POST /api/events — Logs a new event and runs the anomaly check automatically
-GET /api/events — Returns everything logged so far
-GET /api/events/agent/{agentName} — Returns events for one specific agent
-GET /api/events/flagged — Returns only the suspicious ones
+1. POST /api/events — Logs a new event and runs the anomaly check automatically
+2. GET /api/events — Returns everything logged so far
+3. GET /api/events/agent/{agentName} — Returns events for one specific agent
+4. GET /api/events/flagged — Returns only the suspicious ones
