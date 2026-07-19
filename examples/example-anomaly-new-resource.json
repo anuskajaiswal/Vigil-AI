@@ -1,0 +1,17 @@
+{
+  "description": "An agent performs a familiar action, but on a resource it has never touched before — like a billing agent suddenly reading employee salary data. Vigil flags the unfamiliar resource specifically.",
+  "request": {
+    "agentName": "billing-agent",
+    "action": "read_file",
+    "resource": "employee_salaries.csv",
+    "status": "success"
+  },
+  "response": {
+    "agentName": "billing-agent",
+    "action": "read_file",
+    "resource": "employee_salaries.csv",
+    "status": "success",
+    "flagged": true,
+    "explanation": "This agent has never accessed 'employee_salaries.csv' before. Past resources: invoices.csv."
+  }
+}

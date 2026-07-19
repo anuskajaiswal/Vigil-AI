@@ -1,0 +1,17 @@
+{
+  "description": "An agent doing something it's done many times before. Vigil recognizes the pattern and logs it without a flag.",
+  "request": {
+    "agentName": "customer-support-bot",
+    "action": "read_file",
+    "resource": "customer_records.csv",
+    "status": "success"
+  },
+  "response": {
+    "agentName": "customer-support-bot",
+    "action": "read_file",
+    "resource": "customer_records.csv",
+    "status": "success",
+    "flagged": false,
+    "explanation": null
+  }
+}

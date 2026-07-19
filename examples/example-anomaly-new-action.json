@@ -1,0 +1,17 @@
+{
+  "description": "The same agent suddenly performs an action it has never done before. Vigil flags it and explains exactly what's new, referencing the agent's actual history.",
+  "request": {
+    "agentName": "customer-support-bot",
+    "action": "export_data",
+    "resource": "customer_records.csv",
+    "status": "success"
+  },
+  "response": {
+    "agentName": "customer-support-bot",
+    "action": "export_data",
+    "resource": "customer_records.csv",
+    "status": "success",
+    "flagged": true,
+    "explanation": "This agent has never performed 'export_data' before. Past actions: read_file, send_email."
+  }
+}
