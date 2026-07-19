@@ -114,6 +114,104 @@
   .stat-value.flagged { color: var(--alert); }
   .stat-value.calm { color: var(--calm); }
 
+  .simulate {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 32px;
+  }
+
+  .simulate-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .simulate-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .simulate-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+  }
+
+  .simulate input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .simulate input:focus {
+    outline: none;
+    border-color: var(--calm);
+  }
+
+  .simulate input::placeholder { color: var(--text-dim); }
+
+  .simulate-btn {
+    background: var(--calm);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+  }
+
+  .simulate-btn:hover { opacity: 0.85; }
+  .simulate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .simulate-result {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    display: none;
+  }
+
+  .simulate-result.show { display: block; }
+
+  .simulate-result.ok {
+    background: rgba(74, 155, 142, 0.08);
+    border: 1px solid rgba(74, 155, 142, 0.3);
+    color: var(--calm);
+  }
+
+  .simulate-result.flagged {
+    background: rgba(224, 87, 91, 0.08);
+    border: 1px solid rgba(224, 87, 91, 0.3);
+    color: var(--alert);
+  }
+
+  .simulate-result.err {
+    background: rgba(217, 164, 65, 0.08);
+    border: 1px solid rgba(217, 164, 65, 0.3);
+    color: var(--amber);
+  }
+
+  @media (max-width: 640px) {
+    .simulate-row { grid-template-columns: 1fr; }
+  }
+
   .feed-header {
     display: flex;
     justify-content: space-between;
@@ -290,6 +388,18 @@
     </div>
   </div>
 
+  <div class="simulate">
+    <div class="simulate-title">Try it yourself</div>
+    <div class="simulate-sub">Submit an action as if you were an AI agent — Vigil checks it against everything that agent has done before.</div>
+    <div class="simulate-row">
+      <input type="text" id="simAgent" placeholder="agent name (e.g. my-agent)" value="my-agent">
+      <input type="text" id="simAction" placeholder="action (e.g. delete_database)">
+      <input type="text" id="simResource" placeholder="resource (e.g. prod_db)">
+      <button class="simulate-btn" id="simBtn">Submit action</button>
+    </div>
+    <div class="simulate-result" id="simResult"></div>
+  </div>
+
   <div class="feed-header">
     <div class="feed-title">Activity Log</div>
     <button class="filter-btn" id="filterBtn">Show flagged only</button>
@@ -376,6 +486,53 @@
         '<div class="loading"><div class="eye-dot"></div>Waking up the server — free hosting takes ~30s to spin up after inactivity. Retrying automatically.</div>';
     }
   }
+
+  document.getElementById('simBtn').addEventListener('click', async () => {
+    const agentName = document.getElementById('simAgent').value.trim();
+    const action = document.getElementById('simAction').value.trim();
+    const resource = document.getElementById('simResource').value.trim();
+    const btn = document.getElementById('simBtn');
+    const result = document.getElementById('simResult');
+
+    if (!agentName || !action || !resource) {
+      result.className = 'simulate-result show err';
+      result.textContent = 'Fill in all three fields — agent name, action, and resource.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    result.className = 'simulate-result show';
+    result.textContent = 'Sending to Vigil — if the server is asleep this can take ~30s.';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, action, resource, status: 'success' })
+      });
+      if (!res.ok) throw new Error('Bad response');
+      const created = await res.json();
+
+      if (created.flagged) {
+        result.className = 'simulate-result show flagged';
+        result.textContent = '🚩 Flagged: ' + created.explanation;
+      } else {
+        result.className = 'simulate-result show ok';
+        result.textContent = '✓ Logged normally — this matches past behavior for this agent.';
+      }
+
+      document.getElementById('simAction').value = '';
+      document.getElementById('simResource').value = '';
+      fetchEvents();
+    } catch (err) {
+      result.className = 'simulate-result show err';
+      result.textContent = 'Could not reach Vigil — the server may still be waking up. Try again in a moment.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit action';
+    }
+  });
 
   document.getElementById('filterBtn').addEventListener('click', () => {
     showFlaggedOnly = !showFlaggedOnly;
