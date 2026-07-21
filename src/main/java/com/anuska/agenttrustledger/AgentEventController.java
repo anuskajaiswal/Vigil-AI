@@ -1,6 +1,7 @@
 package com.anuska.agenttrustledger;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,15 +14,42 @@ public class AgentEventController {
     @Autowired
     private AgentEventRepository repository;
 
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    private static final String PUBLIC_DEMO_ORG_NAME = "Public Demo";
+
+    // Resolves which organization this request belongs to.
+    // - If a valid API key is provided, use that organization.
+    // - If no API key is provided, fall back to a shared "Public Demo" org
+    //   (this keeps the public dashboard working with no key required).
+    // Returns null if an API key WAS provided but doesn't match anything.
+    private Organization resolveOrganization(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return organizationRepository.findByName(PUBLIC_DEMO_ORG_NAME)
+                    .orElseGet(() -> organizationRepository.save(
+                            new Organization(PUBLIC_DEMO_ORG_NAME, "public-demo-no-key-required")));
+        }
+        return organizationRepository.findByApiKey(apiKey).orElse(null);
+    }
+
     // Log a new event
     @PostMapping
-    public AgentEvent logEvent(@RequestBody AgentEvent event) {
+    public ResponseEntity<?> logEvent(@RequestBody AgentEvent event,
+                                       @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+
+        Organization org = resolveOrganization(apiKey);
+        if (org == null) {
+            return ResponseEntity.status(401).body("Invalid API key.");
+        }
+
         if (event.getTimestamp() == null) {
             event.setTimestamp(LocalDateTime.now());
         }
+        event.setOrganizationId(org.getId());
 
-        // Get this agent's past events
-        List<AgentEvent> pastEvents = repository.findByAgentName(event.getAgentName());
+        // Get this agent's past events, scoped to this organization only
+        List<AgentEvent> pastEvents = repository.findByOrganizationIdAndAgentName(org.getId(), event.getAgentName());
 
         // Check if this action has ever happened before for this agent
         boolean actionSeenBefore = pastEvents.stream()
@@ -59,24 +87,37 @@ public class AgentEventController {
             event.setExplanation(reason.toString().trim());
         }
 
-        return repository.save(event);
+        return ResponseEntity.ok(repository.save(event));
     }
 
-    // Get all events
+    // Get all events for the caller's organization
     @GetMapping
-    public List<AgentEvent> getAllEvents() {
-        return repository.findAll();
+    public ResponseEntity<?> getAllEvents(@RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+        Organization org = resolveOrganization(apiKey);
+        if (org == null) {
+            return ResponseEntity.status(401).body("Invalid API key.");
+        }
+        return ResponseEntity.ok(repository.findByOrganizationId(org.getId()));
     }
 
-    // Get events for one specific agent
+    // Get events for one specific agent, within the caller's organization
     @GetMapping("/agent/{agentName}")
-    public List<AgentEvent> getEventsByAgent(@PathVariable String agentName) {
-        return repository.findByAgentName(agentName);
+    public ResponseEntity<?> getEventsByAgent(@PathVariable String agentName,
+                                               @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+        Organization org = resolveOrganization(apiKey);
+        if (org == null) {
+            return ResponseEntity.status(401).body("Invalid API key.");
+        }
+        return ResponseEntity.ok(repository.findByOrganizationIdAndAgentName(org.getId(), agentName));
     }
 
-    // Get only flagged (suspicious) events
+    // Get only flagged (suspicious) events, within the caller's organization
     @GetMapping("/flagged")
-    public List<AgentEvent> getFlaggedEvents() {
-        return repository.findByFlaggedTrue();
+    public ResponseEntity<?> getFlaggedEvents(@RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+        Organization org = resolveOrganization(apiKey);
+        if (org == null) {
+            return ResponseEntity.status(401).body("Invalid API key.");
+        }
+        return ResponseEntity.ok(repository.findByOrganizationIdAndFlaggedTrue(org.getId()));
     }
 }

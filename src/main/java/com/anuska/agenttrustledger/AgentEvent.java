@@ -18,6 +18,7 @@ public class AgentEvent {
     private LocalDateTime timestamp;
     private boolean flagged = false;
     private String explanation;
+    private Long organizationId;
 
     // Constructors
     public AgentEvent() {
@@ -95,5 +96,12 @@ public class AgentEvent {
     public void setExplanation(String explanation) {
         this.explanation = explanation;
     }
-}
 
+    public Long getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(Long organizationId) {
+        this.organizationId = organizationId;
+    }
+}
