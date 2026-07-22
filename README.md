@@ -22,6 +22,16 @@ Vigil is my attempt at answering that. It's a small, focused security tool that 
 
 This isn't about deciding good vs. bad — it's about surfacing the *unfamiliar*, so a human (or a smarter system downstream) can decide what to do about it.
 
+## For organizations
+
+Vigil isn't just a single shared demo — any organization can sign up and get their own fully isolated space, so their agents' activity is never mixed with anyone else's.
+
+1. **Sign up right on the dashboard:** [https://vigil-ai-uuhq.onrender.com](https://vigil-ai-uuhq.onrender.com) — click "New here? Sign up," pick an organization name and a password (4+ characters), and you're in.
+2. **Log every action:** send each agent action to Vigil with your organization's name and password in the request headers. A small wrapper function around your agent's action-execution code is usually all it takes.
+3. **View your own dashboard:** log in from the same panel at the top of the dashboard to see only your organization's activity, completely separate from the public demo.
+
+No login at all? You're automatically viewing the shared public demo space — that's what powers the "Try it yourself" box.
+
 ## See it in action
 
 Here's a real example, pulled directly from the live system:
@@ -48,6 +58,16 @@ Here's a real example, pulled directly from the live system:
 }
 ```
 
+**Authenticated request — scoped to your own organization:**
+```bash
+curl -X POST https://vigil-ai-uuhq.onrender.com/api/events \
+  -H "Content-Type: application/json" \
+  -H "X-Org-Name: your-organization-name" \
+  -H "X-Org-Password: your-password" \
+  -d '{"agentName":"billing-agent","action":"read_file","resource":"invoices.csv","status":"success"}'
+```
+This agent is checked only against *your* organization's history — never against the public demo's or any other company's data.
+
 More sample scenarios live in [`/examples`](./examples), including an agent that suddenly touches a file it's never accessed before.
 
 **Want to try it with your own scenario?** Go to the [live dashboard](https://vigil-ai-uuhq.onrender.com) and use the "Try it yourself" box — type in an agent name, an action, and a resource, and watch Vigil evaluate it in real time.
@@ -57,8 +77,15 @@ More sample scenarios live in [`/examples`](./examples), including an agent that
 - **Backend:** Java, Spring Boot, REST API
 - **Database:** PostgreSQL
 - **Anomaly detection:** custom logic that checks each new action/resource pair against that agent's full history
-- **Frontend:** a dark-themed live dashboard (no framework — plain HTML/CSS/JS), polling the API in real time
+- **Multi-tenancy:** every organization signs up with a name and password (hashed with bcrypt, never stored in plain text); all data and anomaly checks are scoped to that organization alone, with a shared public space for anyone not logged in
+- **Frontend:** a dark-themed live dashboard (no framework — plain HTML/CSS/JS), polling the API in real time, with inline sign up and login built right in
 - **Deployment:** Render (backend + database), auto-deployed from this repo via Docker
+
+## Roadmap
+
+- [ ] Password recovery for organizations that forget their login
+- [ ] Richer anomaly detection beyond "seen before / not seen before" — time-of-day patterns, volume spikes
+- [ ] Pre-built integration helpers for popular AI agent frameworks
 
 ## Running it locally
 
