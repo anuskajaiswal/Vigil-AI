@@ -25,8 +25,8 @@ public class OrganizationController {
         if (request.name == null || request.name.isBlank()) {
             return ResponseEntity.badRequest().body("Organization name is required.");
         }
-        if (request.password == null || request.password.length() < 6) {
-            return ResponseEntity.badRequest().body("Password must be at least 6 characters.");
+        if (request.password == null || request.password.length() < 4) {
+            return ResponseEntity.badRequest().body("Password must be at least 4 characters.");
         }
         if (repository.findByName(request.name).isPresent()) {
             return ResponseEntity.status(409).body("An organization with this name already exists.");

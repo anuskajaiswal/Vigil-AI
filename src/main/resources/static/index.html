@@ -440,7 +440,7 @@
   <div class="org-panel" id="signupPanel" style="display:none">
     <span class="org-panel-label">Create your organization</span>
     <input type="text" id="signupNameInput" placeholder="Organization name">
-    <input type="password" id="signupPasswordInput" placeholder="Choose a password (min 6 characters)">
+    <input type="password" id="signupPasswordInput" placeholder="Choose a password (min 4 characters)">
     <button class="org-panel-btn" id="signupSubmitBtn">Create</button>
   </div>
   <div class="simulate-result" id="orgResult" style="margin-bottom: 20px;"></div>
@@ -708,8 +708,8 @@
       showOrgMessage('Enter both an organization name and a password.', true);
       return;
     }
-    if (password.length < 6) {
-      showOrgMessage('Password must be at least 6 characters.', true);
+    if (password.length < 4) {
+      showOrgMessage('Password must be at least 4 characters.', true);
       return;
     }
 
