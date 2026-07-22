@@ -114,6 +114,159 @@
   .stat-value.flagged { color: var(--alert); }
   .stat-value.calm { color: var(--calm); }
 
+  .org-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .org-panel-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .org-panel input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    min-width: 140px;
+  }
+
+  .org-panel input:focus { outline: none; border-color: var(--calm); }
+  .org-panel input::placeholder { color: var(--text-dim); }
+
+  .org-panel-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .org-panel-btn:hover { border-color: var(--calm); color: var(--calm); }
+
+  .org-panel-signup {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .org-panel-signup a { color: var(--calm); text-decoration: none; }
+  .org-panel-signup a:hover { text-decoration: underline; }
+
+  .simulate {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 32px;
+  }
+
+  .simulate-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .simulate-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .simulate-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+  }
+
+  .simulate input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .simulate input:focus {
+    outline: none;
+    border-color: var(--calm);
+  }
+
+  .simulate input::placeholder { color: var(--text-dim); }
+
+  .simulate-btn {
+    background: var(--calm);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+  }
+
+  .simulate-btn:hover { opacity: 0.85; }
+  .simulate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .simulate-result {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    display: none;
+  }
+
+  .simulate-result.show { display: block; }
+
+  .simulate-result.ok {
+    background: rgba(74, 155, 142, 0.08);
+    border: 1px solid rgba(74, 155, 142, 0.3);
+    color: var(--calm);
+  }
+
+  .simulate-result.flagged {
+    background: rgba(224, 87, 91, 0.08);
+    border: 1px solid rgba(224, 87, 91, 0.3);
+    color: var(--alert);
+  }
+
+  .simulate-result.err {
+    background: rgba(217, 164, 65, 0.08);
+    border: 1px solid rgba(217, 164, 65, 0.3);
+    color: var(--amber);
+  }
+
+  @media (max-width: 640px) {
+    .simulate-row { grid-template-columns: 1fr; }
+  }
+
   .feed-header {
     display: flex;
     justify-content: space-between;
@@ -275,6 +428,23 @@
     <div class="status-line" id="statusLine">connecting<span>...</span></div>
   </header>
 
+  <div class="org-panel">
+    <span class="org-panel-label" id="orgModeLabel">Viewing: Public demo</span>
+    <input type="text" id="orgNameInput" placeholder="Organization name">
+    <input type="password" id="orgPasswordInput" placeholder="Password">
+    <button class="org-panel-btn" id="loadOrgBtn">Log in</button>
+    <button class="org-panel-btn" id="signupToggleBtn">New here? Sign up</button>
+    <button class="org-panel-btn" id="clearOrgBtn" style="display:none">Back to public demo</button>
+  </div>
+
+  <div class="org-panel" id="signupPanel" style="display:none">
+    <span class="org-panel-label">Create your organization</span>
+    <input type="text" id="signupNameInput" placeholder="Organization name">
+    <input type="password" id="signupPasswordInput" placeholder="Choose a password (min 6 characters)">
+    <button class="org-panel-btn" id="signupSubmitBtn">Create</button>
+  </div>
+  <div class="simulate-result" id="orgResult" style="margin-bottom: 20px;"></div>
+
   <div class="stats">
     <div class="stat">
       <div class="stat-label">Events logged</div>
@@ -288,6 +458,18 @@
       <div class="stat-label">Agents watched</div>
       <div class="stat-value calm" id="agentCount">—</div>
     </div>
+  </div>
+
+  <div class="simulate">
+    <div class="simulate-title">Try it yourself</div>
+    <div class="simulate-sub">Submit an action as if you were an AI agent — Vigil checks it against everything that agent has done before.</div>
+    <div class="simulate-row">
+      <input type="text" id="simAgent" placeholder="agent name (e.g. my-agent)" value="my-agent">
+      <input type="text" id="simAction" placeholder="action (e.g. delete_database)">
+      <input type="text" id="simResource" placeholder="resource (e.g. prod_db)">
+      <button class="simulate-btn" id="simBtn">Submit action</button>
+    </div>
+    <div class="simulate-result" id="simResult"></div>
   </div>
 
   <div class="feed-header">
@@ -313,6 +495,32 @@
 
   let allEvents = [];
   let showFlaggedOnly = false;
+
+  // Organization login handling — if set, every request is scoped to
+  // that organization's own isolated data instead of the public demo.
+  let currentOrgName = localStorage.getItem('vigilOrgName') || '';
+  let currentOrgPassword = localStorage.getItem('vigilOrgPassword') || '';
+
+  function apiHeaders(extra = {}) {
+    const headers = { ...extra };
+    if (currentOrgName) {
+      headers['X-Org-Name'] = currentOrgName;
+      headers['X-Org-Password'] = currentOrgPassword;
+    }
+    return headers;
+  }
+
+  function updateOrgModeUI() {
+    const label = document.getElementById('orgModeLabel');
+    const clearBtn = document.getElementById('clearOrgBtn');
+    if (currentOrgName) {
+      label.textContent = 'Viewing: ' + currentOrgName;
+      clearBtn.style.display = '';
+    } else {
+      label.textContent = 'Viewing: Public demo';
+      clearBtn.style.display = 'none';
+    }
+  }
 
   function timeAgo(isoString) {
     const then = new Date(isoString);
@@ -364,7 +572,13 @@
   async function fetchEvents() {
     const statusLine = document.getElementById('statusLine');
     try {
-      const res = await fetch(`${API_BASE}/api/events`);
+      const res = await fetch(`${API_BASE}/api/events`, { headers: apiHeaders() });
+      if (res.status === 401) {
+        statusLine.innerHTML = 'login failed';
+        document.getElementById('feedContainer').innerHTML =
+          '<div class="empty">Incorrect organization name or password. Check it and log in again, or go back to the public demo.</div>';
+        return;
+      }
       if (!res.ok) throw new Error('Bad response');
       allEvents = await res.json();
       updateStats();
@@ -377,6 +591,58 @@
     }
   }
 
+  document.getElementById('simBtn').addEventListener('click', async () => {
+    const agentName = document.getElementById('simAgent').value.trim();
+    const action = document.getElementById('simAction').value.trim();
+    const resource = document.getElementById('simResource').value.trim();
+    const btn = document.getElementById('simBtn');
+    const result = document.getElementById('simResult');
+
+    if (!agentName || !action || !resource) {
+      result.className = 'simulate-result show err';
+      result.textContent = 'Fill in all three fields — agent name, action, and resource.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    result.className = 'simulate-result show';
+    result.textContent = 'Sending to Vigil — if the server is asleep this can take ~30s.';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/events`, {
+        method: 'POST',
+        headers: apiHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ agentName, action, resource, status: 'success' })
+      });
+      if (res.status === 401) {
+        result.className = 'simulate-result show err';
+        result.textContent = 'Your organization login is no longer valid.';
+        return;
+      }
+      if (!res.ok) throw new Error('Bad response');
+      const created = await res.json();
+
+      if (created.flagged) {
+        result.className = 'simulate-result show flagged';
+        result.textContent = '🚩 Flagged: ' + created.explanation;
+      } else {
+        result.className = 'simulate-result show ok';
+        result.textContent = '✓ Logged normally — this matches past behavior for this agent.';
+      }
+
+      document.getElementById('simAction').value = '';
+      document.getElementById('simResource').value = '';
+      fetchEvents();
+    } catch (err) {
+      result.className = 'simulate-result show err';
+      result.textContent = 'Could not reach Vigil — the server may still be waking up. Try again in a moment.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit action';
+    }
+  });
+
   document.getElementById('filterBtn').addEventListener('click', () => {
     showFlaggedOnly = !showFlaggedOnly;
     document.getElementById('filterBtn').classList.toggle('active', showFlaggedOnly);
@@ -384,6 +650,96 @@
     renderEvents();
   });
 
+  function showOrgMessage(text, isError) {
+    const el = document.getElementById('orgResult');
+    el.className = 'simulate-result show ' + (isError ? 'err' : 'ok');
+    el.textContent = text;
+  }
+
+  document.getElementById('loadOrgBtn').addEventListener('click', async () => {
+    const name = document.getElementById('orgNameInput').value.trim();
+    const password = document.getElementById('orgPasswordInput').value;
+    if (!name || !password) {
+      showOrgMessage('Enter both your organization name and password.', true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/events`, {
+        headers: { 'X-Org-Name': name, 'X-Org-Password': password }
+      });
+      if (res.status === 401) {
+        showOrgMessage('Incorrect organization name or password.', true);
+        return;
+      }
+      currentOrgName = name;
+      currentOrgPassword = password;
+      localStorage.setItem('vigilOrgName', currentOrgName);
+      localStorage.setItem('vigilOrgPassword', currentOrgPassword);
+      document.getElementById('orgResult').className = 'simulate-result';
+      updateOrgModeUI();
+      fetchEvents();
+    } catch (err) {
+      showOrgMessage('Could not reach Vigil — the server may still be waking up.', true);
+    }
+  });
+
+  document.getElementById('clearOrgBtn').addEventListener('click', () => {
+    currentOrgName = '';
+    currentOrgPassword = '';
+    localStorage.removeItem('vigilOrgName');
+    localStorage.removeItem('vigilOrgPassword');
+    document.getElementById('orgNameInput').value = '';
+    document.getElementById('orgPasswordInput').value = '';
+    updateOrgModeUI();
+    fetchEvents();
+  });
+
+  document.getElementById('signupToggleBtn').addEventListener('click', () => {
+    const panel = document.getElementById('signupPanel');
+    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  });
+
+  document.getElementById('signupSubmitBtn').addEventListener('click', async () => {
+    const name = document.getElementById('signupNameInput').value.trim();
+    const password = document.getElementById('signupPasswordInput').value;
+
+    if (!name || !password) {
+      showOrgMessage('Enter both an organization name and a password.', true);
+      return;
+    }
+    if (password.length < 6) {
+      showOrgMessage('Password must be at least 6 characters.', true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/organizations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+      });
+
+      if (res.status === 409) {
+        showOrgMessage('An organization with this name already exists. Try logging in instead.', true);
+        return;
+      }
+      if (!res.ok) throw new Error('Bad response');
+
+      currentOrgName = name;
+      currentOrgPassword = password;
+      localStorage.setItem('vigilOrgName', currentOrgName);
+      localStorage.setItem('vigilOrgPassword', currentOrgPassword);
+      showOrgMessage('Organization created — you are now logged in.', false);
+      document.getElementById('signupPanel').style.display = 'none';
+      updateOrgModeUI();
+      fetchEvents();
+    } catch (err) {
+      showOrgMessage('Could not reach Vigil — the server may still be waking up.', true);
+    }
+  });
+
+  updateOrgModeUI();
   fetchEvents();
   setInterval(fetchEvents, 8000);
 </script>

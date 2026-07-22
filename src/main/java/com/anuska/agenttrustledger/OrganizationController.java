@@ -1,9 +1,9 @@
 package com.anuska.agenttrustledger;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -13,22 +13,33 @@ public class OrganizationController {
     @Autowired
     private OrganizationRepository repository;
 
-    // Sign up a new organization and get back an API key.
-    // The API key is only ever shown in this response, so save it immediately.
+    public static class SignupRequest {
+        public String name;
+        public String password;
+    }
+
+    // Sign up a new organization with a name and a password they choose.
+    // The password is hashed before storage — never saved or returned in plain text.
     @PostMapping
-    public ResponseEntity<?> createOrganization(@RequestBody Organization request) {
-        if (request.getName() == null || request.getName().isBlank()) {
+    public ResponseEntity<?> createOrganization(@RequestBody SignupRequest request) {
+        if (request.name == null || request.name.isBlank()) {
             return ResponseEntity.badRequest().body("Organization name is required.");
         }
-
-        if (repository.findByName(request.getName()).isPresent()) {
+        if (request.password == null || request.password.length() < 6) {
+            return ResponseEntity.badRequest().body("Password must be at least 6 characters.");
+        }
+        if (repository.findByName(request.name).isPresent()) {
             return ResponseEntity.status(409).body("An organization with this name already exists.");
         }
 
-        String apiKey = UUID.randomUUID().toString();
-        Organization org = new Organization(request.getName(), apiKey);
+        String hashed = BCrypt.hashpw(request.password, BCrypt.gensalt());
+        Organization org = new Organization(request.name, hashed);
         Organization saved = repository.save(org);
 
-        return ResponseEntity.ok(saved);
+        // Return only the id and name — never the password or its hash.
+        return ResponseEntity.ok(new Object() {
+            public final Long id = saved.getId();
+            public final String name = saved.getName();
+        });
     }
 }

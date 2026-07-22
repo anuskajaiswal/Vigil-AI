@@ -10,17 +10,18 @@ public class Organization {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String name;
 
-    @Column(unique = true)
-    private String apiKey;
+    // Never store or return the raw password — only this hash.
+    private String passwordHash;
 
     public Organization() {
     }
 
-    public Organization(String name, String apiKey) {
+    public Organization(String name, String passwordHash) {
         this.name = name;
-        this.apiKey = apiKey;
+        this.passwordHash = passwordHash;
     }
 
     public Long getId() {
@@ -39,11 +40,11 @@ public class Organization {
         this.name = name;
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

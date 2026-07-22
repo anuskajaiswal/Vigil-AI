@@ -1,5 +1,6 @@
 package com.anuska.agenttrustledger;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,28 +20,33 @@ public class AgentEventController {
 
     private static final String PUBLIC_DEMO_ORG_NAME = "Public Demo";
 
-    // Resolves which organization this request belongs to.
-    // - If a valid API key is provided, use that organization.
-    // - If no API key is provided, fall back to a shared "Public Demo" org
-    //   (this keeps the public dashboard working with no key required).
-    // Returns null if an API key WAS provided but doesn't match anything.
-    private Organization resolveOrganization(String apiKey) {
-        if (apiKey == null || apiKey.isBlank()) {
+    // Resolves which organization this request belongs to, using an
+    // organization name + password instead of an API key.
+    // - If neither is provided, falls back to the shared "Public Demo" org.
+    // - If provided but wrong, returns null (caller should respond 401).
+    private Organization resolveOrganization(String orgName, String orgPassword) {
+        if ((orgName == null || orgName.isBlank()) && (orgPassword == null || orgPassword.isBlank())) {
             return organizationRepository.findByName(PUBLIC_DEMO_ORG_NAME)
                     .orElseGet(() -> organizationRepository.save(
-                            new Organization(PUBLIC_DEMO_ORG_NAME, "public-demo-no-key-required")));
+                            new Organization(PUBLIC_DEMO_ORG_NAME, "")));
         }
-        return organizationRepository.findByApiKey(apiKey).orElse(null);
+
+        return organizationRepository.findByName(orgName)
+                .filter(org -> org.getPasswordHash() != null
+                        && !org.getPasswordHash().isEmpty()
+                        && BCrypt.checkpw(orgPassword == null ? "" : orgPassword, org.getPasswordHash()))
+                .orElse(null);
     }
 
     // Log a new event
     @PostMapping
     public ResponseEntity<?> logEvent(@RequestBody AgentEvent event,
-                                       @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
+                                       @RequestHeader(value = "X-Org-Name", required = false) String orgName,
+                                       @RequestHeader(value = "X-Org-Password", required = false) String orgPassword) {
 
-        Organization org = resolveOrganization(apiKey);
+        Organization org = resolveOrganization(orgName, orgPassword);
         if (org == null) {
-            return ResponseEntity.status(401).body("Invalid API key.");
+            return ResponseEntity.status(401).body("Incorrect organization name or password.");
         }
 
         if (event.getTimestamp() == null) {
@@ -51,11 +57,9 @@ public class AgentEventController {
         // Get this agent's past events, scoped to this organization only
         List<AgentEvent> pastEvents = repository.findByOrganizationIdAndAgentName(org.getId(), event.getAgentName());
 
-        // Check if this action has ever happened before for this agent
         boolean actionSeenBefore = pastEvents.stream()
                 .anyMatch(e -> e.getAction().equals(event.getAction()));
 
-        // Check if this resource has ever been touched before for this agent
         boolean resourceSeenBefore = pastEvents.stream()
                 .anyMatch(e -> e.getResource().equals(event.getResource()));
 
@@ -92,10 +96,11 @@ public class AgentEventController {
 
     // Get all events for the caller's organization
     @GetMapping
-    public ResponseEntity<?> getAllEvents(@RequestHeader(value = "X-API-Key", required = false) String apiKey) {
-        Organization org = resolveOrganization(apiKey);
+    public ResponseEntity<?> getAllEvents(@RequestHeader(value = "X-Org-Name", required = false) String orgName,
+                                           @RequestHeader(value = "X-Org-Password", required = false) String orgPassword) {
+        Organization org = resolveOrganization(orgName, orgPassword);
         if (org == null) {
-            return ResponseEntity.status(401).body("Invalid API key.");
+            return ResponseEntity.status(401).body("Incorrect organization name or password.");
         }
         return ResponseEntity.ok(repository.findByOrganizationId(org.getId()));
     }
@@ -103,20 +108,22 @@ public class AgentEventController {
     // Get events for one specific agent, within the caller's organization
     @GetMapping("/agent/{agentName}")
     public ResponseEntity<?> getEventsByAgent(@PathVariable String agentName,
-                                               @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
-        Organization org = resolveOrganization(apiKey);
+                                               @RequestHeader(value = "X-Org-Name", required = false) String orgName,
+                                               @RequestHeader(value = "X-Org-Password", required = false) String orgPassword) {
+        Organization org = resolveOrganization(orgName, orgPassword);
         if (org == null) {
-            return ResponseEntity.status(401).body("Invalid API key.");
+            return ResponseEntity.status(401).body("Incorrect organization name or password.");
         }
         return ResponseEntity.ok(repository.findByOrganizationIdAndAgentName(org.getId(), agentName));
     }
 
     // Get only flagged (suspicious) events, within the caller's organization
     @GetMapping("/flagged")
-    public ResponseEntity<?> getFlaggedEvents(@RequestHeader(value = "X-API-Key", required = false) String apiKey) {
-        Organization org = resolveOrganization(apiKey);
+    public ResponseEntity<?> getFlaggedEvents(@RequestHeader(value = "X-Org-Name", required = false) String orgName,
+                                               @RequestHeader(value = "X-Org-Password", required = false) String orgPassword) {
+        Organization org = resolveOrganization(orgName, orgPassword);
         if (org == null) {
-            return ResponseEntity.status(401).body("Invalid API key.");
+            return ResponseEntity.status(401).body("Incorrect organization name or password.");
         }
         return ResponseEntity.ok(repository.findByOrganizationIdAndFlaggedTrue(org.getId()));
     }
